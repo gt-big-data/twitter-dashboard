@@ -1,35 +1,27 @@
-from flask import Flask, render_template
+from flask import Flask
 from flask_socketio import SocketIO
-from flask_socketio import send, emit
 import threading
-import consumer
+from consumer import StreamConsumer
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super secret!'
 socketio = SocketIO(app)
 
 
-@socketio.on('hello')
-def handle_hello(message):
-    print message
-    emit('goodbye', {'data': 'goodbye'})
+def emit_coordinates(ch, method, properties, body):
+    socketio.emit('coordinates', {'data': body})
 
+def emit_trending_list(ch, method, properties, body):
+    socketio.emit('trending', {'data': body})
 
-
-
-@app.route("/")
-def hello():
-    return "Hello World!"
-
-def send_tweet(ch, method, properties, body):
-    socketio.emit('geo', {'data': body})
-
-def run_consumer():
-    c = consumer.GeoStreamConsumer(send_tweet)
+def run_consumer_with_callback(callback):
+    c = StreamConsumer(callback)
     c.start_consuming()
 
 if __name__ == '__main__':
     print 'Running on http://localhost:5000/'
-    t = threading.Thread(target=run_consumer)
-    t.start()
+    coordinates_thread = threading.Thread(target=run_consumer_with_callback, args=(emit_coordinates))
+    coordinates_thread.start()
+    trending_thread = threading.Thread(target=run_consumer_with_callback, args=(emit_trending_list))
+    trending_thread.start()
     print 'starting app'
     socketio.run(app)

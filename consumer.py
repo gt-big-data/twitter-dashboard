@@ -18,17 +18,10 @@ class StreamConsumer(object):
         self.channel.start_consuming()
         return
 
-
-class GeoStreamConsumer(StreamConsumer):
-
-    def __call__(self, ch, method, properties, body):
-        print 'we got a message:', body
-        return
-
-class TrendingHashtagConsumer(StreamConsumer):
-
-    def __call__(self, ch, method, properties, body):
-        return
 if __name__ == '__main__':
-    consumer = GeoStreamConsumer()
+
+    def noop(ch, method, properties, body):
+        print body
+
+    consumer = StreamConsumer(noop)
     consumer.start_consuming()

@@ -1,40 +1,46 @@
+import json
+
 import pika
-from tweepy.streaming import StreamListener
-from tweepy import OAuthHandler
-from tweepy import Stream
-
-import time
+from twython import TwythonStreamer
 
 
-access_token = "575879267-S04mMaZXADLnWwuA1H9eG3sEsbAucVB7oa9akvwp"
-access_token_secret = "xlhk4je2g9mIpTxauqIItgPhkjeXRQOvxP1lq1T3VUMyZ"
-consumer_key = "uKvmYnHapbLyXiOUvck323yak"
-consumer_secret = "mZLd7dox3nA8eOIqLFmP09xKawY6m30LnSCs8PafpQg48gnMYh"
+def load_credentials(_file):
+    with open(_file, 'r') as f:
+        return json.loads(f.read())
 
 
-class StreamProducer(StreamListener):
+class StreamProducer(TwythonStreamer):
 
-    def __init__(self):
+    def __init__(self, app_key, app_secret, access_token, ACCESS_TOKEN_SECRET):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
         self.channel.exchange_declare(exchange='tweets', type='fanout')
+        super(StreamProducer, self).__init__(app_key, app_secret, access_token, access_token_secret)
         return
 
-    def on_data(self, data):
+    def on_success(self, data):
+        print type(data)
         print data
-        self.channel.basic_publish(exchange='tweets', routing_key='', body=data)
-        return True
+        self.channel.basic_publish(exchange='tweets', routing_key='', body=json.dumps(data))
 
-    def on_error(self, status):
-        print status
-
+    def on_error(self, status_code, data):
+        print status_code
 
 if __name__ == '__main__':
-    producer = StreamProducer()
-    auth = OAuthHandler(consumer_key, consumer_secret)
-    auth.set_access_token(access_token, access_token_secret)
-    stream = Stream(auth, producer)
-    stream.sample()
-    # while True:
-    #     producer.on_data('its a message')
-    #     time.sleep(3)
+    """
+    You'll need a credentials.json in the same directory. It should be
+    of the form:
+    {
+     "API_KEY" : "XXXXXX",
+     "API_SECRET" : "XXXXXX",
+     "ACCESS_TOKEN" : "XXXXXX",
+     "ACCESS_TOKEN_SECRET" : "XXXXXX"
+     }
+    """
+    credentials = load_credentials('credentials.json')
+    api_key = credentials['API_KEY']
+    api_secret = credentials['API_SECRET']
+    access_token = credentials['ACCESS_TOKEN']
+    access_token_secret = credentials['ACCESS_TOKEN_SECRET']
+    stream = StreamProducer(api_key, api_secret, access_token, access_token_secret)
+    stream.statuses.filter()
