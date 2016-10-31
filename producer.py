@@ -19,12 +19,11 @@ class StreamProducer(TwythonStreamer):
         return
 
     def on_success(self, data):
-        print type(data)
-        print data
         self.channel.basic_publish(exchange='tweets', routing_key='', body=json.dumps(data))
+        return
 
     def on_error(self, status_code, data):
-        print status_code
+        print status_code, data
 
 if __name__ == '__main__':
     """
@@ -43,4 +42,5 @@ if __name__ == '__main__':
     access_token = credentials['ACCESS_TOKEN']
     access_token_secret = credentials['ACCESS_TOKEN_SECRET']
     stream = StreamProducer(api_key, api_secret, access_token, access_token_secret)
-    stream.statuses.filter()
+    print 'Starting producer'
+    stream.statuses.filter(locations=['-180,-90', '180,90'])
