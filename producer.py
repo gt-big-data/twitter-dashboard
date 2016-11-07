@@ -11,7 +11,7 @@ def load_credentials(_file):
 
 class StreamProducer(TwythonStreamer):
 
-    def __init__(self, app_key, app_secret, access_token, ACCESS_TOKEN_SECRET):
+    def __init__(self, app_key, app_secret, access_token, access_token_secret):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
         self.channel.exchange_declare(exchange='tweets', type='fanout')
@@ -23,7 +23,9 @@ class StreamProducer(TwythonStreamer):
         return
 
     def on_error(self, status_code, data):
-        print status_code, data
+        if status_code == 420:
+            print 'Being rate limited, disconnecting.'
+            return self.disconnect()
 
 if __name__ == '__main__':
     """
