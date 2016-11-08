@@ -4,37 +4,26 @@ var map = new google.maps.Map(document.getElementById('map'), {
           zoom: 1
         });
 
-var markers = [];
-
-setInterval(function() {
-  var now = new Date();
-  markers = markers.filter(function(m) {
-    var diff = now.getTime() - m.time.getTime() > 60 * 1000;
-    if (diff) {
-      m.setMap(null);
-    }
-    return diff;
-  });
-}, 10000);
-
 socket.on('connect', function () {
    console.log('connected!');
 });
 
 socket.on('coordinates', function(data) {
-  console.log(data);
   var coords = getCoordinates(data.data);
   if (!coords) {
     return;
   }
 
-  var marker = new google.maps.Marker({
-         position: coords,
-         map: map,
-         title: 'Hello World!'
-       });
-  marker.time = coords.time;
-  markers.push(marker);
+  var circle = new google.maps.Circle({
+    map: map,
+    center: coords,
+    radius: 1000,
+  });
+  circle.time = coords.time;
+  circle.data = data.data;
+  setTimeout(function() {
+    circle.setMap(null);
+  }, 5000);
 });
 
 socket.on('trending', function(data) {

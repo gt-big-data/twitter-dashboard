@@ -1,4 +1,5 @@
 import json
+import threading
 
 import pika
 from twython import TwythonStreamer
@@ -19,7 +20,12 @@ class StreamProducer(TwythonStreamer):
         return
 
     def on_success(self, data):
-        self.channel.basic_publish(exchange='tweets', routing_key='', body=json.dumps(data))
+
+        def publish():
+            self.channel.basic_publish(exchange='tweets', routing_key='', body=json.dumps(data))
+            return
+        t = threading.Thread(target=publish)
+        t.start()
         return
 
     def on_error(self, status_code, data):
